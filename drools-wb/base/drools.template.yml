@@ -1,0 +1,184 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: dedalus-drools-template
+message: |-
+  The following service(s) have been created in your current project.
+
+        Application Name: ${APP_NAME}
+        Application Version: ${APP_VERSION}
+        Database Name: ${XDISCOVERY_API_MONGODB_NAME}
+
+  For more information about using this template, including OpenShift considerations, see http://ci-git.noemalife.loc:80/enterprise-architect/openshift-s2i-template.git.
+metadata:
+  annotations:
+    description: |-
+      This image includes:
+            - Drools (showcase flavour)
+    iconClass: icon-d4center
+    openshift.io/display-name: D4 - Drools
+    openshift.io/documentation-url: drools
+    openshift.io/long-description: WIP
+    openshift.io/provider-display-name: Dedalus S.p.A.
+    openshift.io/support-url: helpdesk@dedalus.eu
+    tags: dedalus-drools,dedalus,drools
+  name: dedalus-drools
+objects:
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      labels:
+        app: ${APP_NAME}
+      name: ${APP_NAME}
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 5
+      selector:
+        app: ${APP_NAME}
+        deploymentconfig: ${APP_NAME}
+      strategy:
+        activeDeadlineSeconds: 1800
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: ${APP_NAME}
+            deploymentconfig: ${APP_NAME}
+        spec:
+          containers:
+            - name: ${APP_NAME}
+              image: docker-registry.default.svc:5000/demo-ea/template-extractor:${APP_VERSION}
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+                  #resources:
+                  #requests:
+                  # cpu: ${CPU_REQUEST}
+                  # memory: ${MEMORY_REQUEST}
+                  #limits:
+                  # cpu: ${CPU_LIMIT}
+                  #memory: ${MEMORY_LIMIT}
+                  #livenessProbe:
+                  #failureThreshold: 3
+                  #httpGet:
+                  #path: /healthcheck
+                  #port: 8080
+                  #scheme: HTTP
+                  #initialDelaySeconds: 60
+                  #periodSeconds: 10
+                  #successThreshold: 1
+                  #timeoutSeconds: 3
+                  #readinessProbe:
+                  #failureThreshold: 3
+                  #httpGet:
+                  #path: /healthcheck
+                  #port: 8080
+                  #scheme: HTTP
+                #initialDelaySeconds: 60
+                #periodSeconds: 10
+                #successThreshold: 1
+                #timeoutSeconds: 3
+              volumeMounts:
+                - mountPath: /wildfly/bin/.niogit
+                  name: drools-git
+              env:
+                - name: NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.namespace
+          volumes:
+            - emptyDir: { }
+              name: drools-git
+          dnsPolicy: ClusterFirst
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - type: ConfigChange
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        description: Exposes and load balances the application pods
+      labels:
+        app: ${APP_NAME}
+      name: ${APP_NAME}-8080-tcp
+    spec:
+      ports:
+        - name: 8080-tcp
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
+        - name: 8001-tcp
+          port: 8001
+          protocol: TCP
+          targetPort: 8001
+      selector:
+        app: ${APP_NAME}
+        deploymentconfig: ${APP_NAME}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: kie-wb-np
+    spec:
+      type: NodePort
+      ports:
+        - port: 8080
+          targetPort: 8080
+          nodePort: 31001
+      selector:
+        app: kie-wb
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+      labels:
+        app: ${APP_NAME}
+      name: ${APP_NAME}-8080-tcp
+    spec:
+      port:
+        targetPort: 8080-tcp
+      to:
+        kind: Service
+        name: ${APP_NAME}-8080-tcp
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+      labels:
+        app: ${APP_NAME}
+      name: ${APP_NAME}-8001-tcp
+    spec:
+      port:
+        targetPort: 8001-tcp
+      to:
+        kind: Service
+        name: ${APP_NAME}-8080-tcp
+#  - apiVersion: v1
+#    kind: PersistentVolumeClaim
+#    metadata:
+#      name: drools-git
+#    spec:
+#      accessModes:
+#        - "ReadWriteOnce"
+#      resources:
+#        requests:
+#          storage: "1Gi"
+#      volumeName: "drools-git"
+#      storageClassName: 'glusterfs-storage'
+parameters:
+  - name: APP_NAME
+    displayName: Application Name
+    description: Type the application name
+    required: true
+    value: drools-workbench
+  - name: APP_VERSION
+    displayName: Version of Application Image
+    description: Version of Application Image to be used (1.0.0, 1.0.0-SNAPSHOT or latest).
+    required: true
+    value: "1.0.1-DROOLS"
