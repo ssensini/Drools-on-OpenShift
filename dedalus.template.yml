@@ -1,0 +1,238 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: dedalus-drools-kie-template
+message: |-
+  The following service(s) have been created in your current project.
+
+        Application Name: ${APP_NAME_DROOLS}
+        Application Version: ${APP_VERSION_DROOLS}
+
+  For more information about using this template, including OpenShift considerations, see http://ci-git.noemalife.loc:80/enterprise-architect/openshift-s2i-template.git.
+metadata:
+  annotations:
+    description: |-
+      This template includes:
+            - Drools (showcase flavour) v7.18.0
+            - Kie Server v7.18.0.
+      This template will create two different DeploymentConfig, one for each component. To access the Drools WB, use the Drools route on port 8080 and add the following context: "/business-central/rest/controller".
+    iconClass: icon-d4center
+    openshift.io/display-name: D4 - Drools w Kie Executor
+    openshift.io/documentation-url: drools
+    openshift.io/long-description: WIP
+    openshift.io/provider-display-name: Dedalus S.p.A.
+    openshift.io/support-url: helpdesk@dedalus.eu
+    tags: dedalus-drools-kie,dedalus,drools
+  name: dedalus-drools-kie
+objects:
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      labels:
+        app: ${APP_NAME_DROOLS}
+      name: ${APP_NAME_DROOLS}
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 5
+      selector:
+        app: ${APP_NAME_DROOLS}
+        deploymentconfig: ${APP_NAME_DROOLS}
+      strategy:
+        activeDeadlineSeconds: 1800
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: ${APP_NAME_DROOLS}
+            deploymentconfig: ${APP_NAME_DROOLS}
+        spec:
+          containers:
+            - name: ${APP_NAME_DROOLS}
+              image: 350801433917.dkr.ecr.eu-west-1.amazonaws.com/enterprise-architect/support:${APP_VERSION_DROOLS}
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+                - containerPort: 8001
+                  protocol: TCP
+              volumeMounts:
+                - mountPath: /wildfly/bin/.niogit
+                  name: drools-git
+              env:
+                - name: NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.namespace
+          volumes:
+            - emptyDir: { }
+              name: drools-git
+          dnsPolicy: ClusterFirst
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - type: ConfigChange
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      labels:
+        app: ${APP_NAME_KIE}
+      name: ${APP_NAME_KIE}
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 5
+      selector:
+        app: ${APP_NAME_KIE}
+        deploymentconfig: ${APP_NAME_KIE}
+      strategy:
+        activeDeadlineSeconds: 1800
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: ${APP_NAME_KIE}
+            deploymentconfig: ${APP_NAME_KIE}
+        spec:
+          containers:
+            - name: ${APP_NAME_KIE}
+              image: 350801433917.dkr.ecr.eu-west-1.amazonaws.com/enterprise-architect/support:${APP_VERSION_KIE}
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 8180
+                  protocol: TCP
+              env:
+                - name: NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.namespace
+                - name: KIE_WB_ENV_KIE_CONTEXT_PATH
+                  value: "business-central"
+                - name: KIE_SERVER_LOCATION
+                  value: http://${APP_NAME_KIE}-8180-tcp:8180/kie-server/services/rest/server
+                - name: KIE_MAVEN_REPO
+                  value: http://${APP_NAME_DROOLS}-8080-tcp:8080/business-central/maven2
+                - name: KIE_SERVER_CONTROLLER
+                  value: http://${APP_NAME_DROOLS}-8080-tcp:8080/business-central/rest/controller
+          dnsPolicy: ClusterFirst
+          terminationGracePeriodSeconds: 30
+      test: false
+      triggers:
+        - type: ConfigChange
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        description: Exposes and load balances the application pods
+      labels:
+        app: ${APP_NAME_DROOLS}
+      name: ${APP_NAME_DROOLS}-8080-tcp
+    spec:
+      ports:
+        - name: 8080-tcp
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
+        - name: 8001-tcp
+          port: 8001
+          protocol: TCP
+          targetPort: 8001
+      selector:
+        app: ${APP_NAME_DROOLS}
+        deploymentconfig: ${APP_NAME_DROOLS}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        description: Exposes and load balances the application pods
+      labels:
+        app: ${APP_NAME_KIE}
+      name: ${APP_NAME_KIE}-8180-tcp
+    spec:
+      ports:
+        - name: 8180-tcp
+          port: 8180
+          protocol: TCP
+          targetPort: 8180
+      selector:
+        app: ${APP_NAME_DROOLS}
+        deploymentconfig: ${APP_NAME_DROOLS}
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+      labels:
+        app: ${APP_NAME_DROOLS}
+      name: ${APP_NAME_KIE}-8180-tcp
+    spec:
+      port:
+        targetPort: 8180-tcp
+      to:
+        kind: Service
+        name: ${APP_NAME_KIE}-8180-tcp
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+      labels:
+        app: ${APP_NAME_DROOLS}
+      name: ${APP_NAME_DROOLS}-8080-tcp
+    spec:
+      port:
+        targetPort: 8080-tcp
+      to:
+        kind: Service
+        name: ${APP_NAME_DROOLS}-8080-tcp
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+      labels:
+        app: ${APP_NAME_DROOLS}
+      name: ${APP_NAME_DROOLS}-8001-tcp
+    spec:
+      port:
+        targetPort: 8001-tcp
+      to:
+        kind: Service
+        name: ${APP_NAME_DROOLS}-8080-tcp
+  #  - apiVersion: v1
+  #    kind: PersistentVolumeClaim
+  #    metadata:
+  #      name: drools-git
+  #    spec:
+  #      accessModes:
+  #        - "ReadWriteOnce"
+  #      resources:
+  #        requests:
+  #          storage: "1Gi"
+  #      volumeName: "drools-git"
+  #      storageClassName: 'glusterfs-storage'
+parameters:
+  - name: APP_NAME_DROOLS
+    displayName: Application Name
+    description: Type the application name
+    required: true
+    value: drools-wb
+  - name: APP_NAME_KIE
+    displayName: Application Name
+    description: Type the application name
+    required: true
+    value: kie-server
+  - name: APP_VERSION_DROOLS
+    displayName: Version of Application Image of Drools
+    description: Version of Application Image to be used (1.0.0, 1.0.0-SNAPSHOT or latest).
+    required: true
+    value: "drools-7.18.0"
+  - name: APP_VERSION_KIE
+    displayName: Version of Application Image of Drools
+    description: Version of Application Image to be used (1.0.0, 1.0.0-SNAPSHOT or latest).
+    required: true
+    value: "kie-server-7.18.0"
