@@ -79,7 +79,7 @@ KIE server is represented by *kie-server* service and cannot run as standalone s
 `docker-compose up --build`
 
 ### OpenShift
-Import dedalus-drools-w-kie.yaml template in the OpenShift Web Console and start it through the Catalog.
+Import dedalus.template.yaml template in the OpenShift Web Console and start it through the Catalog.
 
 While Drools can run as standalone, KIE Server can't, so using the single templates will start them in OpenShift, but won't make them able to connect to each other. This is due the environment configuration of the following variables that are required to make the websocket work.
 
