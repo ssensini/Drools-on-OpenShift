@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 labels:
   template: dedalus-drools-kie-template
@@ -31,7 +31,8 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: ${APP_NAME_DROOLS}
+        app.kubernetes.io/part-of: drools
+        io.dedalus.gravitee: drools
       name: ${APP_NAME_DROOLS}
     spec:
       replicas: 1
@@ -60,6 +61,33 @@ objects:
               volumeMounts:
                 - mountPath: /wildfly/bin/.niogit
                   name: drools-git
+              resources:
+                limits:
+                  cpu: 300m
+                  memory: 1Gi
+                requests:
+                  cpu: 60m
+                  memory: 600Mi
+              readinessProbe:
+                httpGet:
+                  path: /healthcheck
+                  port: 8080
+                  scheme: HTTP
+                initialDelaySeconds: 15
+                timeoutSeconds: 3
+                periodSeconds: 10
+                successThreshold: 1
+                failureThreshold: 3
+              livenessProbe:
+                httpGet:
+                  path: /healthcheck
+                  port: 8080
+                  scheme: HTTP
+                initialDelaySeconds: 15
+                timeoutSeconds: 3
+                periodSeconds: 10
+                successThreshold: 1
+                failureThreshold: 3
               env:
                 - name: NAMESPACE
                   valueFrom:
@@ -80,7 +108,8 @@ objects:
       annotations:
         template.alpha.openshift.io/wait-for-ready: "true"
       labels:
-        app: ${APP_NAME_KIE}
+        app.kubernetes.io/part-of: drools
+        io.dedalus.gravitee: kie-server
       name: ${APP_NAME_KIE}
     spec:
       replicas: 1
@@ -104,6 +133,33 @@ objects:
               ports:
                 - containerPort: 8180
                   protocol: TCP
+              resources:
+                limits:
+                  cpu: '300m'
+                  memory: '2Gi'
+                requests:
+                  cpu: '60m'
+                  memory: '1Gi'
+#              readinessProbe:
+#                httpGet:
+#                  path: /healthcheck
+#                  port: 8180
+#                  scheme: HTTP
+#                initialDelaySeconds: 10
+#                timeoutSeconds: 3
+#                periodSeconds: 10
+#                successThreshold: 1
+#                failureThreshold: 3
+#              livenessProbe:
+#                httpGet:
+#                  path: /healthcheck
+#                  port: 8180
+#                  scheme: HTTP
+#                initialDelaySeconds: 10
+#                timeoutSeconds: 3
+#                periodSeconds: 10
+#                successThreshold: 1
+#                failureThreshold: 3
               env:
                 - name: NAMESPACE
                   valueFrom:
@@ -159,15 +215,32 @@ objects:
           protocol: TCP
           targetPort: 8180
       selector:
-        app: ${APP_NAME_DROOLS}
-        deploymentconfig: ${APP_NAME_DROOLS}
+        app: ${APP_NAME_KIE}
+        deploymentconfig: ${APP_NAME_KIE}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        description: Exposes and load balances the application pods
+      labels:
+        app: ${APP_NAME_KIE}
+      name: ${APP_NAME_KIE}-8080-tcp
+    spec:
+      ports:
+        - name: 8080-tcp
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
+      selector:
+        app: ${APP_NAME_KIE}
+        deploymentconfig: ${APP_NAME_KIE}
   - apiVersion: v1
     kind: Route
     metadata:
       annotations:
         template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
       labels:
-        app: ${APP_NAME_DROOLS}
+        app: ${APP_NAME_KIE}
       name: ${APP_NAME_KIE}-8180-tcp
     spec:
       port:
