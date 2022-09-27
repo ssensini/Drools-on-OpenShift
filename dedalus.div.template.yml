@@ -63,17 +63,17 @@ objects:
                   name: drools-git
               resources:
                 limits:
-                  cpu: 300m
-                  memory: 1Gi
+                  cpu: 700m
+                  memory: 1800Mi
                 requests:
-                  cpu: 60m
-                  memory: 600Mi
+                  cpu: 100m
+                  memory: 1000Mi
               readinessProbe:
                 httpGet:
                   path: /healthcheck
                   port: 8080
                   scheme: HTTP
-                initialDelaySeconds: 15
+                initialDelaySeconds: 60
                 timeoutSeconds: 3
                 periodSeconds: 10
                 successThreshold: 1
@@ -83,7 +83,7 @@ objects:
                   path: /healthcheck
                   port: 8080
                   scheme: HTTP
-                initialDelaySeconds: 15
+                initialDelaySeconds: 60
                 timeoutSeconds: 3
                 periodSeconds: 10
                 successThreshold: 1
@@ -133,13 +133,6 @@ objects:
               ports:
                 - containerPort: 8180
                   protocol: TCP
-              resources:
-                limits:
-                  cpu: '300m'
-                  memory: '2Gi'
-                requests:
-                  cpu: '60m'
-                  memory: '1Gi'
 #              readinessProbe:
 #                httpGet:
 #                  path: /healthcheck
@@ -160,6 +153,13 @@ objects:
 #                periodSeconds: 10
 #                successThreshold: 1
 #                failureThreshold: 3
+              resources:
+                limits:
+                  cpu: '300m'
+                  memory: '2Gi'
+                requests:
+                  cpu: '60m'
+                  memory: '1Gi'
               env:
                 - name: NAMESPACE
                   valueFrom:
@@ -276,18 +276,18 @@ objects:
       to:
         kind: Service
         name: ${APP_NAME_DROOLS}-8080-tcp
-  #  - apiVersion: v1
-  #    kind: PersistentVolumeClaim
-  #    metadata:
-  #      name: drools-git
-  #    spec:
-  #      accessModes:
-  #        - "ReadWriteOnce"
-  #      resources:
-  #        requests:
-  #          storage: "1Gi"
-  #      volumeName: "drools-git"
-  #      storageClassName: 'glusterfs-storage'
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: drools-git
+    spec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: "1Gi"
+#      volumeName: "drools-git"
+      storageClassName: 'azure-file'
 parameters:
   - name: APP_NAME_DROOLS
     displayName: Application Name
