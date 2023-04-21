@@ -1,10 +1,10 @@
 ###########################################################################
-# Dockerfile that provides the image for JBoss Drools Workbench 7.18.0.Final
+# Dockerfile that provides the image for JBoss Drools Workbench 7.24.0.Final
 ###########################################################################
 
 ####### BASE ############
 # FROM jboss/wildfly:14.0.1.Final
-FROM 350801433917.dkr.ecr.eu-west-1.amazonaws.com/enterprise-architect/dedalus-s2i-ubi7-wildfly-openjdk8-jdk:14.0-3
+FROM 350801433917.dkr.ecr.eu-west-1.amazonaws.com/enterprise-architect/dedalus-s2i-ubi8-wildfly-openjdk8-jdk:14.0-9
 
 ####### MAINTAINER ############
 MAINTAINER "Serena Sensini" "@TeamEA"
@@ -12,11 +12,12 @@ MAINTAINER "Serena Sensini" "@TeamEA"
 ####### ENVIRONMENT ############
 ENV JBOSS_BIND_ADDRESS 0.0.0.0
 ENV KIE_REPOSITORY https://repository.jboss.org/nexus/content/groups/public-jboss
-ENV KIE_VERSION 7.18.0.Final
+ENV KIE_VERSION 7.24.0.Final
 ENV KIE_CLASSIFIER wildfly14
 ENV KIE_CONTEXT_PATH business-central
 ENV JAVA_OPTS -Xms256m -Xmx2048m -Djava.net.preferIPv4Stack=true -Dfile.encoding=UTF-8
 ENV HOME /opt/jboss
+ENV KIE_DEMO false
 
 ## TOBE: CHANGES NEEDED TO HAVE A SHOWCASE
 # Use demo and examples by default in this showcase image (internet connection required).
@@ -25,10 +26,10 @@ ENV KIE_SERVER_PROFILE standalone-full-drools
 WORKDIR $HOME
 
 ####### DROOLS-WB ############
-RUN curl -o $HOME/$KIE_CONTEXT_PATH.war $KIE_REPOSITORY/org/kie/business-central/$KIE_VERSION/business-central-$KIE_VERSION-$KIE_CLASSIFIER.war && \
-    unzip -q $HOME/$KIE_CONTEXT_PATH.war -d $WILDFLY_HOME/standalone/deployments/$KIE_CONTEXT_PATH.war && \
+RUN curl -o /tmp/$KIE_CONTEXT_PATH.war $KIE_REPOSITORY/org/kie/business-central/$KIE_VERSION/business-central-$KIE_VERSION-$KIE_CLASSIFIER.war && \
+    unzip -q /tmp/$KIE_CONTEXT_PATH.war -d $WILDFLY_HOME/standalone/deployments/$KIE_CONTEXT_PATH.war && \
     touch $WILDFLY_HOME/standalone/deployments/$KIE_CONTEXT_PATH.war.dodeploy &&  \
-    rm -rf $HOME/$KIE_CONTEXT_PATH.war;
+    rm -rf /tmp/$KIE_CONTEXT_PATH.war;
 
 ####### SCRIPTS ############
 RUN set -eux; \

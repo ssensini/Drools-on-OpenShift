@@ -22,7 +22,7 @@ Introduction
 The image contains:       
         
 * JBoss Wildfly 14.0.3.Final
-* JBoss Drools Workbench 7.18.0.Final
+* JBoss Drools Workbench 7.24.0.Final
 
 This image provides the JBoss Drools Workbench web application. The original image has been downloaded from jboss/drools-workbench:latest; the current one has been modified in order to be OpenShift and K8S-compliant,
  so it's rootless and the Dockerfile contains the instructions to have the showcase active.

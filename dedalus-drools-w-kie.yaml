@@ -201,9 +201,9 @@ parameters:
     displayName: Version of Application Image of Drools
     description: Version of Application Image to be used.
     required: true
-    value: "drools-7.18.0"
+    value: "drools-7.24.0"
   - name: APP_VERSION_KIE
     displayName: Version of Application Image of Drools
     description: Version of Application Image to be used.
     required: true
-    value: "kie-server-7.18.0"
+    value: "kie-server-7.24.0"

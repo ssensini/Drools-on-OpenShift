@@ -33,7 +33,7 @@ Officially, there are two available images:
 
 **Drools Workbench**
 
-It's the base Docker image for Drools Workbench. It's purpose is to be used as base for extending and creating your own images that uses Drools Workbench.                      
+It's the base Docker image for Drools Workbench. Its purpose is to be used as base for extending and creating your own images that uses Drools Workbench.                      
  
 **Drools Workbench showcase**
 
@@ -54,13 +54,13 @@ Drools Workbench is represented by *business-central* service and can run as sta
 KIE Server
 ==========
 
-Officially, KIE Server provides an standalone Drools execution environment to execute your Drools rules.                        
+Officially, KIE Server provides a standalone Drools execution environment to execute your Drools rules.                        
 
 There are two available images:                
 
 **KIE Server**
 
-It's the base Docker image for KIE Server. It's purpose is to be used as base for extending and creating your own images that uses KIE Server runtime environment.                      
+It's the base Docker image for KIE Server. Its purpose is to be used as base for extending and creating your own images that uses KIE Server runtime environment.                      
  
 **KIE Server showcase**
 
@@ -79,7 +79,7 @@ KIE server is represented by *kie-server* service and cannot run as standalone s
 `docker-compose up --build`
 
 ### OpenShift
-Import dedalus.template.yaml template in the OpenShift Web Console and start it through the Catalog.
+Import _dedalus.template.yaml_ template in the OpenShift Web Console and start it through the Catalog.
 
 While Drools can run as standalone, KIE Server can't, so using the single templates will start them in OpenShift, but won't make them able to connect to each other. This is due the environment configuration of the following variables that are required to make the websocket work.
 
@@ -89,3 +89,11 @@ While Drools can run as standalone, KIE Server can't, so using the single templa
 - KIE_SERVER_CONTROLLER (i.e.: http://business-central:8080/business-central/rest/controller)
 
 ```
+
+> The workbench stores its data, by default in the directory $WILDFLY_HOME=/wildfly/.niogit , for example /wildfly/bin/.
+> gitnio
+
+# Changelog 
+- 7.24.0 with UBI8 working correctly
+- 7.18.0 with UBI7 reported a bug on session, deprecated due to UBI7 EOL
+
